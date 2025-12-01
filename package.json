@@ -16,13 +16,15 @@
   },
   "dependencies": {
     "@unhead/vue": "^2.0.19",
+    "gsap": "^3.13.0",
     "pinia": "^3.0.3",
     "vue": "^3.5.22",
+    "vue-perfect-dark-mode": "^1.0.0",
     "vue-router": "^4.6.3"
   },
   "devDependencies": {
-    "@iconify/tailwind4": "^1.0.6",
     "@iconify-json/mdi": "^1.2.3",
+    "@iconify/tailwind4": "^1.0.6",
     "@pinia/testing": "^1.0.2",
     "@playwright/test": "^1.56.1",
     "@prettier/plugin-oxc": "^0.0.4",
