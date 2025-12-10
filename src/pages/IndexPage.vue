@@ -4,6 +4,8 @@ import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { SplitText } from 'gsap/SplitText';
 import { Icon } from '@iconify/vue';
+import 'animate.css';
+import WorkExperience from '@/components/WorkExperience.vue'
 
 gsap.registerPlugin(ScrollTrigger);
 gsap.registerPlugin(SplitText);
@@ -183,23 +185,51 @@ const setupAboutSplitAnimation = () => {
 
 // ---------------------- HORIZONTAL SLIDER ----------------------
 const setupHorizontalScroll = () => {
-  const section = document.querySelector('#horizontal-section');
-  const wrapper = document.querySelector('#horizontal-wrapper');
+  const section = document.querySelector('#horizontal-section') as HTMLElement;
+  const wrapper = document.querySelector('#horizontal-wrapper') as HTMLElement;
 
   if (!section || !wrapper) return;
 
-  const scrollAmount = (wrapper as HTMLElement).scrollWidth - (section as HTMLElement).clientWidth;
+  ScrollTrigger.matchMedia({
 
-  gsap.to(wrapper, {
-    x: -scrollAmount,
-    ease: 'none',
-    scrollTrigger: {
-      trigger: section,
-      start: 'top top',
-      end: `+=${scrollAmount}`,
-      scrub: true,
-      pin: true,
-      anticipatePin: 1
+    "(min-width: 768px)": function () {
+      // Desktop behavior
+      const scrollAmount =
+        wrapper.scrollWidth - section.clientWidth;
+
+      gsap.to(wrapper, {
+        x: -scrollAmount,
+        ease: "none",
+        scrollTrigger: {
+          trigger: section,
+          start: "top top",
+          end: `+=${scrollAmount}`,
+          scrub: true,
+          pin: true,
+          anticipatePin: 1,
+          invalidateOnRefresh: true,
+        },
+      });
+    },
+
+    "(max-width: 767px)": function () {
+      // Mobile behavior (must recalc differently)
+      const getScrollAmount = () =>
+        wrapper.scrollWidth - section.offsetWidth;
+
+      gsap.to(wrapper, {
+        x: () => -getScrollAmount(),
+        ease: "none",
+        scrollTrigger: {
+          trigger: section,
+          start: "top top",
+          end: () => "+=" + getScrollAmount(),
+          scrub: true,
+          pin: true,
+          anticipatePin: 1,
+          invalidateOnRefresh: true,
+        },
+      });
     }
   });
 };
@@ -260,6 +290,25 @@ const setupVerticalSnap = () => {
   });
 };
 
+const setupFooterBounce = () => {
+  const section = document.querySelector("#contact-section");
+  if (!section) return;
+
+  gsap.from(section, {
+    y: 200,
+    opacity: 0,
+    ease: "bounce.out",
+    duration: 1.4,
+    scrollTrigger: {
+      trigger: section,
+      start: "top bottom",  // when it first enters view
+      end: "bottom bottom",
+      toggleActions: "play none none reverse"
+    }
+  });
+};
+
+
 // ---------------------- MOUNT / UNMOUNT ----------------------
 onMounted(() => {
   setupHorizontalScroll();
@@ -268,6 +317,7 @@ onMounted(() => {
   setupSplitTextAnimation();
   setupAboutSplitAnimation();
   setupVerticalSnap();
+  setupFooterBounce();
 });
 
 onUnmounted(() => {
@@ -277,14 +327,14 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div
-    class="min-h-screen transition-colors duration-500 relative overflow-hidden"
-    :class="{
-      'bg-[#0E100F] text-gray-900 dark:text-gray-100': isDark,
-      'bg-white text-gray-900 dark:text-gray-900': !isDark
-    }"
-  >
-    <!-- Background shapes -->
+<div
+  class="min-h-screen transition-colors duration-500 relative overflow-hidden"
+  :class="{
+    'bg-[#0E100F] text-gray-900 dark:text-gray-100': isDark,
+    'bg-white text-gray-900 dark:text-gray-900': !isDark,
+  }"
+>
+
     <div
       v-for="(shape, i) in shapes"
       :id="`shape-${i}`"
@@ -298,27 +348,29 @@ onUnmounted(() => {
         left: shape.left + '%',
         transform: 'translate(-50%, -50%)'
       }"
-    />
+    ></div>
 
-    <!-- Hero Section -->
-    <section class="h-screen flex flex-col justify-between p-8 md:p-16 relative z-10 snap-section">
+    <section class="h-screen flex flex-col justify-between p-8 md:p-16 relative z-10">
       <nav class="flex justify-between items-center w-full">
-        <div class="font-sans text-xl font-semibold flex items-center gap-2">
-          <Icon icon="ic:round-alternate-email" class="h-6 w-6" />
-          <span>BigMark11</span>
-        </div>
+        <div class="flex justify-between items-center font-sans text-xl font-semibold"><Icon icon="mdi:alternate-email" class="h-4 w-4" />BigMark11</div>
 
         <label
-          class="relative block aspect-[2/0.75] w-20 rounded-full bg-gradient-to-br from-purple-100 via-violet-600 shadow-2xl transition-all duration-300"
+          class="relative block aspect-[2/0.75] w-20 rounded-full
+          bg-gradient-to-br from-purple-100 via-violet-600 shadow-2xl
+          transition-all duration-300"
         >
-          <input class="peer/input hidden" type="checkbox" @click.stop="toggleTheme" />
+          <input class="peer/input hidden" type="checkbox" @click.stop="toggleTheme">
           <div
-            class="absolute left-[3%] top-1/2 aspect-square h-[90%] -translate-y-1/2 rotate-180 rounded-full bg-white transition-all duration-500 peer-checked/input:left-[63%] peer-checked/input:-rotate-6"
-          />
+              class="absolute left-[3%] top-1/2 aspect-square h-[90%]
+              -translate-y-1/2 rotate-180 rounded-full bg-white
+              transition-all duration-500
+              peer-checked/input:left-[63%] peer-checked/input:-rotate-6"
+          ></div>
         </label>
       </nav>
 
       <div class="flex-grow flex flex-col md:flex-row items-center justify-between pt-16 md:pt-0">
+
         <div class="w-full md:w-[55%] flex flex-col justify-center items-start space-y-4">
           <h1 class="split text-6xl md:text-7xl font-serif font-bold opacity-0">
             Mark Anthony Olivares.
@@ -327,226 +379,936 @@ onUnmounted(() => {
           <p class="text-lg md:text-xl opacity-80">Front-End Developer</p>
 
           <p class="about-text-split text-ld md:text-2xl max-w-2xl opacity-0 overflow-hidden">
-            I am a Dynamic and results-oriented Frontend Developer with over 3 years of experience in
-            creating responsive and scalable web applications. I am highly skilled in modern JavaScript
-            frameworks, particularly Vue.js (Vue 2/Vue 3), Nuxt.js, and Tailwind CSS, with strong
-            proficiency in API integration and high-quality UI/UX implementation. I bring a commitment
-            to continuous improvement to deliver innovative digital solutions.
+            I am a Dynamic and results-oriented Frontend Developer with over 3 years of experience in creating responsive and scalable web applications. I am highly skilled in modern JavaScript frameworks, particularly Vue.js (Vue 2/Vue 3), Nuxt.js, and Tailwind CSS , with strong proficiency in API integration and high-quality UI/UX implementation. I bring a commitment to continuous improvement to deliver innovative digital solutions.
           </p>
-
           <a
             href="mailto:olivaresmarkanthony14@gmail.com"
             class="flex overflow-hidden items-center text-sm font-medium focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-black text-white shadow hover:bg-black/90 h-12 px-4 py-2 max-w-52 whitespace-pre md:flex group relative w-full justify-center gap-2 rounded-md transition-all duration-300 ease-out hover:ring-2 hover:ring-black hover:ring-offset-2"
           >
-            <span class="absolute right-0 -mt-12 h-32 w-8 translate-x-12 rotate-12 bg-white opacity-10 transition-all duration-1000 ease-out group-hover:-translate-x-40" />
+            <span
+              class="absolute right-0 -mt-12 h-32 w-8 translate-x-12 rotate-12 bg-white opacity-10 transition-all duration-1000 ease-out group-hover:-translate-x-40"
+            ></span>
             <div class="flex items-center">
               <span class="ml-1 text-white">Send me an Email</span>
             </div>
             <div class="ml-2 flex items-center gap-1 text-sm md:flex">
-              <Icon icon="line-md:email-alt-twotone" class="h-6 w-6 text-gray-500 transition-all duration-300 group-hover:text-yellow-300" />
+              <Icon icon="mdi:email-fast" class="h-5 w-5 text-gray-500 transition-all duration-300 group-hover:text-yellow-300" />
             </div>
           </a>
+
+
         </div>
 
         <div class="w-full md:w-[45%] flex justify-center items-center mt-12 md:mt-0">
-          <img src="/img/myself-img-1.png" alt="Mark Anthony Olivares" class="max-h-[800px] w-auto object-contain" />
+          <img
+            src="/img/myself-img-1.png"
+            alt="Mark Anthony Olivares"
+            class="max-h-[800px] w-auto object-contain"
+          />
         </div>
+
       </div>
     </section>
 
-    <!-- Main -->
-    <main class="py-80 md:py-24 px-8 relative z-10">
-      <section id="horizontal-section" class="w-full overflow-hidden py-10 mb-40 max-w-7xl mx-auto">
+    <main class="max-w-full mx-auto py-80 md:py-24 px-2 relative z-10">
+      <section id="horizontal-section" class="w-full overflow-hidden py-10 h-[110vh] md:h-auto">
         <h2 class="text-4xl font-bold mb-16 text-center">Recent Projects</h2>
 
-        <div id="horizontal-wrapper" class="flex">
-          <div
-            v-for="n in 5"
-            :key="n"
-            class="w-screen h-60 flex-shrink-0 flex items-center justify-center rounded-xl shadow-xl bg-white dark:bg-gray-800 text-3xl font-bold"
-          >
-            Slide {{ n }}
+      <div id="horizontal-wrapper" class="flex space-x-8 px-2 w-max">
+
+          <div class="w-screen flex-shrink-0 flex flex-col items-center bg-transparent ">
+            <!-- FULL WIDTH IMAGE CENTERED -->
+            <div class="w-full flex items-center justify-center">
+              <img
+                src="/img/megabet.png"
+                alt="Project Image"
+                class="w-full max-w-[800px] object-contain mx-auto rounded-lg"
+              />
+            </div>
+
+            <!-- TEXT BELOW -->
+            <div class="mt-3 max-w-3xl mx-auto">
+              <h1 class="text-2xl font-bold">Project: E-Commerce Marketplace Platform</h1>
+
+              <!-- WHAT YOU DID -->
+              <div class="mt-2 space-y-1 text-left mx-auto">
+
+                <!-- ITEM 1 -->
+                <label class="flex flex-row items-center gap-2.5 dark:text-white light:text-black text-xs md:text-sm">
+                  <input type="checkbox" class="peer hidden" />
+                  <div
+                    class="h-5 w-5 flex items-center justify-center rounded-md border border-[#a2a1a833]
+                          light:bg-[#e8e8e8] dark:bg-[#212121]
+                          peer-checked:bg-[#7152f3] transition"
+                  >
+                    <Icon icon="ci:check-big" class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100" />
+                  </div>
+                  Built and improved reusable frontend components for Web and H5 apps.
+                </label>
+
+                <!-- ITEM 2 -->
+                <label class="flex flex-row items-center gap-2.5 dark:text-white light:text-black text-xs md:text-sm">
+                  <input type="checkbox" class="peer hidden" />
+                  <div
+                    class="h-5 w-5 flex items-center justify-center rounded-md border border-[#a2a1a833]
+                          light:bg-[#e8e8e8] dark:bg-[#212121]
+                          peer-checked:bg-[#7152f3] transition"
+                  >
+                    <Icon icon="ci:check-big" class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100" />
+                  </div>
+                  Implemented UI/UX enhancements to increase user engagement.
+                </label>
+
+                <!-- ITEM 3 -->
+                <label class="flex flex-row items-center gap-2.5 dark:text-white light:text-black text-xs md:text-sm">
+                  <input type="checkbox" class="peer hidden" />
+                  <div
+                    class="h-5 w-5 flex items-center justify-center rounded-md border border-[#a2a1a833]
+                          light:bg-[#e8e8e8] dark:bg-[#212121]
+                          peer-checked:bg-[#7152f3] transition"
+                  >
+                    <Icon icon="ci:check-big" class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100" />
+                  </div>
+                  Integrated APIs for seamless communication between frontend and backend.
+                </label>
+
+                <!-- ITEM 4 -->
+                <label class="flex flex-row items-center gap-2.5 dark:text-white light:text-black text-xs md:text-sm">
+                  <input type="checkbox" class="peer hidden" />
+                  <div
+                    class="h-5 w-5 flex items-center justify-center rounded-md border border-[#a2a1a833]
+                          light:bg-[#e8e8e8] dark:bg-[#212121]
+                          peer-checked:bg-[#7152f3] transition"
+                  >
+                    <Icon icon="ci:check-big" class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100" />
+                  </div>
+                  Ensured scalable and maintainable code using software engineering best practices.
+                </label>
+
+              </div>
+
+              <!-- IMPACT -->
+              <h3 class="mt-6 font-semibold text-xl">Impact</h3>
+
+              <div class="mt-3 space-y-1 text-left mx-auto">
+
+                <!-- IMPACT ITEM 1 -->
+                <label class="flex flex-row items-center gap-2.5 dark:text-white light:text-black text-xs md:text-sm">
+                  <input type="checkbox" class="peer hidden" />
+                  <div
+                    class="h-5 w-5 flex items-center justify-center rounded-md border border-[#a2a1a833]
+                          light:bg-[#e8e8e8] dark:bg-[#212121]
+                          peer-checked:bg-[#7152f3] transition"
+                  >
+                    <Icon icon="ci:check-big" class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100" />
+                  </div>
+                  Improved platform performance and UI consistency.
+                </label>
+
+                <!-- IMPACT ITEM 2 -->
+                <label class="flex flex-row items-center gap-2.5 dark:text-white light:text-black text-xs md:text-sm">
+                  <input type="checkbox" class="peer hidden" />
+                  <div
+                    class="h-5 w-5 flex items-center justify-center rounded-md border border-[#a2a1a833]
+                          light:bg-[#e8e8e8] dark:bg-[#212121]
+                          peer-checked:bg-[#7152f3] transition"
+                  >
+                    <Icon icon="ci:check-big" class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100" />
+                  </div>
+                  Reduced development time with modular, reusable components.
+                </label>
+
+                <!-- IMPACT ITEM 3 -->
+                <label class="flex flex-row items-center gap-2.5 dark:text-white light:text-black text-xs md:text-sm">
+                  <input type="checkbox" class="peer hidden" />
+                  <div
+                    class="h-5 w-5 flex items-center justify-center rounded-md border border-[#a2a1a833]
+                          light:bg-[#e8e8e8] dark:bg-[#212121]
+                          peer-checked:bg-[#7152f3] transition"
+                  >
+                    <Icon icon="ci:check-big" class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100" />
+                  </div>
+                  Maintained consistent UI across desktop, mobile web, and H5 apps.
+                </label>
+
+              </div>
+
+              <span class="block mt-6 text-sm opacity-70">
+                Tech: Vue 3, Tailwind, API Integration, H5 apps
+              </span>
+            </div>
+
+
           </div>
+
+          <div class="w-screen flex-shrink-0 flex flex-col items-center bg-transparent ">
+            <!-- FULL WIDTH IMAGE CENTERED -->
+            <div class="w-full flex items-center justify-center">
+              <img
+                src="/img/veda33.png"
+                alt="Project Image"
+                class="w-full max-w-[800px] object-contain mx-auto rounded-lg"
+              />
+            </div>
+
+            <!-- TEXT BELOW -->
+            <div class="mt-3 max-w-3xl mx-auto">
+              <h1 class="text-2xl font-bold">Project: E-Commerce Marketplace Platform</h1>
+
+              <!-- WHAT YOU DID -->
+              <div class="mt-2 space-y-1 text-left mx-auto">
+
+                <!-- ITEM 1 -->
+                <label class="flex flex-row items-center gap-2.5 dark:text-white light:text-black text-xs md:text-sm">
+                  <input type="checkbox" class="peer hidden" />
+                  <div
+                    class="h-5 w-5 flex items-center justify-center rounded-md border border-[#a2a1a833]
+                          light:bg-[#e8e8e8] dark:bg-[#212121]
+                          peer-checked:bg-[#7152f3] transition"
+                  >
+                    <Icon icon="ci:check-big" class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100" />
+                  </div>
+                  Built and improved reusable frontend components for Web and H5 apps.
+                </label>
+
+                <!-- ITEM 2 -->
+                <label class="flex flex-row items-center gap-2.5 dark:text-white light:text-black text-xs md:text-sm">
+                  <input type="checkbox" class="peer hidden" />
+                  <div
+                    class="h-5 w-5 flex items-center justify-center rounded-md border border-[#a2a1a833]
+                          light:bg-[#e8e8e8] dark:bg-[#212121]
+                          peer-checked:bg-[#7152f3] transition"
+                  >
+                    <Icon icon="ci:check-big" class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100" />
+                  </div>
+                  Implemented UI/UX enhancements to increase user engagement.
+                </label>
+
+                <!-- ITEM 3 -->
+                <label class="flex flex-row items-center gap-2.5 dark:text-white light:text-black text-xs md:text-sm">
+                  <input type="checkbox" class="peer hidden" />
+                  <div
+                    class="h-5 w-5 flex items-center justify-center rounded-md border border-[#a2a1a833]
+                          light:bg-[#e8e8e8] dark:bg-[#212121]
+                          peer-checked:bg-[#7152f3] transition"
+                  >
+                    <Icon icon="ci:check-big" class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100" />
+                  </div>
+                  Integrated APIs for seamless communication between frontend and backend.
+                </label>
+
+                <!-- ITEM 4 -->
+                <label class="flex flex-row items-center gap-2.5 dark:text-white light:text-black text-xs md:text-sm">
+                  <input type="checkbox" class="peer hidden" />
+                  <div
+                    class="h-5 w-5 flex items-center justify-center rounded-md border border-[#a2a1a833]
+                          light:bg-[#e8e8e8] dark:bg-[#212121]
+                          peer-checked:bg-[#7152f3] transition"
+                  >
+                    <Icon icon="ci:check-big" class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100" />
+                  </div>
+                  Ensured scalable and maintainable code using software engineering best practices.
+                </label>
+
+              </div>
+
+              <!-- IMPACT -->
+              <h3 class="mt-6 font-semibold text-xl">Impact</h3>
+
+              <div class="mt-3 space-y-1 text-left mx-auto">
+
+                <!-- IMPACT ITEM 1 -->
+                <label class="flex flex-row items-center gap-2.5 dark:text-white light:text-black text-xs md:text-sm">
+                  <input type="checkbox" class="peer hidden" />
+                  <div
+                    class="h-5 w-5 flex items-center justify-center rounded-md border border-[#a2a1a833]
+                          light:bg-[#e8e8e8] dark:bg-[#212121]
+                          peer-checked:bg-[#7152f3] transition"
+                  >
+                    <Icon icon="ci:check-big" class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100" />
+                  </div>
+                  Improved platform performance and UI consistency.
+                </label>
+
+                <!-- IMPACT ITEM 2 -->
+                <label class="flex flex-row items-center gap-2.5 dark:text-white light:text-black text-xs md:text-sm">
+                  <input type="checkbox" class="peer hidden" />
+                  <div
+                    class="h-5 w-5 flex items-center justify-center rounded-md border border-[#a2a1a833]
+                          light:bg-[#e8e8e8] dark:bg-[#212121]
+                          peer-checked:bg-[#7152f3] transition"
+                  >
+                    <Icon icon="ci:check-big" class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100" />
+                  </div>
+                  Reduced development time with modular, reusable components.
+                </label>
+
+                <!-- IMPACT ITEM 3 -->
+                <label class="flex flex-row items-center gap-2.5 dark:text-white light:text-black text-xs md:text-sm">
+                  <input type="checkbox" class="peer hidden" />
+                  <div
+                    class="h-5 w-5 flex items-center justify-center rounded-md border border-[#a2a1a833]
+                          light:bg-[#e8e8e8] dark:bg-[#212121]
+                          peer-checked:bg-[#7152f3] transition"
+                  >
+                    <Icon icon="ci:check-big" class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100" />
+                  </div>
+                  Maintained consistent UI across desktop, mobile web, and H5 apps.
+                </label>
+
+              </div>
+
+              <span class="block mt-6 text-sm opacity-70">
+                Tech: Vue 3, Tailwind, API Integration, H5 apps
+              </span>
+            </div>
+
+
+          </div>
+
+          <div class="w-screen flex-shrink-0 flex flex-col items-center bg-transparent ">
+            <!-- FULL WIDTH IMAGE CENTERED -->
+            <div class="w-full flex items-center justify-center">
+              <img
+                src="/img/dreamplay1.png"
+                alt="Project Image"
+                class="w-full max-w-[800px] object-contain mx-auto rounded-lg"
+              />
+            </div>
+
+            <!-- TEXT BELOW -->
+            <div class="mt-3 max-w-3xl mx-auto">
+              <h1 class="text-2xl font-bold">Project: E-Commerce Marketplace Platform</h1>
+
+              <!-- WHAT YOU DID -->
+              <div class="mt-2 space-y-1 text-left mx-auto">
+
+                <!-- ITEM 1 -->
+                <label class="flex flex-row items-center gap-2.5 dark:text-white light:text-black text-xs md:text-sm">
+                  <input type="checkbox" class="peer hidden" />
+                  <div
+                    class="h-5 w-5 flex items-center justify-center rounded-md border border-[#a2a1a833]
+                          light:bg-[#e8e8e8] dark:bg-[#212121]
+                          peer-checked:bg-[#7152f3] transition"
+                  >
+                    <Icon icon="ci:check-big" class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100" />
+                  </div>
+                  Built and improved reusable frontend components for Web and H5 apps.
+                </label>
+
+                <!-- ITEM 2 -->
+                <label class="flex flex-row items-center gap-2.5 dark:text-white light:text-black text-xs md:text-sm">
+                  <input type="checkbox" class="peer hidden" />
+                  <div
+                    class="h-5 w-5 flex items-center justify-center rounded-md border border-[#a2a1a833]
+                          light:bg-[#e8e8e8] dark:bg-[#212121]
+                          peer-checked:bg-[#7152f3] transition"
+                  >
+                    <Icon icon="ci:check-big" class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100" />
+                  </div>
+                  Implemented UI/UX enhancements to increase user engagement.
+                </label>
+
+                <!-- ITEM 3 -->
+                <label class="flex flex-row items-center gap-2.5 dark:text-white light:text-black text-xs md:text-sm">
+                  <input type="checkbox" class="peer hidden" />
+                  <div
+                    class="h-5 w-5 flex items-center justify-center rounded-md border border-[#a2a1a833]
+                          light:bg-[#e8e8e8] dark:bg-[#212121]
+                          peer-checked:bg-[#7152f3] transition"
+                  >
+                    <Icon icon="ci:check-big" class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100" />
+                  </div>
+                  Integrated APIs for seamless communication between frontend and backend.
+                </label>
+
+                <!-- ITEM 4 -->
+                <label class="flex flex-row items-center gap-2.5 dark:text-white light:text-black text-xs md:text-sm">
+                  <input type="checkbox" class="peer hidden" />
+                  <div
+                    class="h-5 w-5 flex items-center justify-center rounded-md border border-[#a2a1a833]
+                          light:bg-[#e8e8e8] dark:bg-[#212121]
+                          peer-checked:bg-[#7152f3] transition"
+                  >
+                    <Icon icon="ci:check-big" class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100" />
+                  </div>
+                  Ensured scalable and maintainable code using software engineering best practices.
+                </label>
+
+              </div>
+
+              <!-- IMPACT -->
+              <h3 class="mt-6 font-semibold text-xl">Impact</h3>
+
+              <div class="mt-3 space-y-1 text-left mx-auto">
+
+                <!-- IMPACT ITEM 1 -->
+                <label class="flex flex-row items-center gap-2.5 dark:text-white light:text-black text-xs md:text-sm">
+                  <input type="checkbox" class="peer hidden" />
+                  <div
+                    class="h-5 w-5 flex items-center justify-center rounded-md border border-[#a2a1a833]
+                          light:bg-[#e8e8e8] dark:bg-[#212121]
+                          peer-checked:bg-[#7152f3] transition"
+                  >
+                    <Icon icon="ci:check-big" class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100" />
+                  </div>
+                  Improved platform performance and UI consistency.
+                </label>
+
+                <!-- IMPACT ITEM 2 -->
+                <label class="flex flex-row items-center gap-2.5 dark:text-white light:text-black text-xs md:text-sm">
+                  <input type="checkbox" class="peer hidden" />
+                  <div
+                    class="h-5 w-5 flex items-center justify-center rounded-md border border-[#a2a1a833]
+                          light:bg-[#e8e8e8] dark:bg-[#212121]
+                          peer-checked:bg-[#7152f3] transition"
+                  >
+                    <Icon icon="ci:check-big" class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100" />
+                  </div>
+                  Reduced development time with modular, reusable components.
+                </label>
+
+                <!-- IMPACT ITEM 3 -->
+                <label class="flex flex-row items-center gap-2.5 dark:text-white light:text-black text-xs md:text-sm">
+                  <input type="checkbox" class="peer hidden" />
+                  <div
+                    class="h-5 w-5 flex items-center justify-center rounded-md border border-[#a2a1a833]
+                          light:bg-[#e8e8e8] dark:bg-[#212121]
+                          peer-checked:bg-[#7152f3] transition"
+                  >
+                    <Icon icon="ci:check-big" class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100" />
+                  </div>
+                  Maintained consistent UI across desktop, mobile web, and H5 apps.
+                </label>
+
+              </div>
+
+              <span class="block mt-6 text-sm opacity-70">
+                Tech: Vue 3, Tailwind, API Integration, H5 apps
+              </span>
+            </div>
+
+
+          </div>
+
+          <div class="w-screen flex-shrink-0 flex flex-col items-center bg-transparent ">
+            <!-- FULL WIDTH IMAGE CENTERED -->
+            <div class="w-full flex items-center justify-center">
+              <img
+                src="/img/bibvip.png"
+                alt="Project Image"
+                class="w-full max-w-[800px] object-contain mx-auto rounded-lg"
+              />
+            </div>
+
+            <!-- TEXT BELOW -->
+            <div class="mt-3 max-w-3xl mx-auto">
+              <h1 class="text-2xl font-bold">Project: E-Commerce Marketplace Platform</h1>
+
+              <!-- WHAT YOU DID -->
+              <div class="mt-2 space-y-1 text-left mx-auto">
+
+                <!-- ITEM 1 -->
+                <label class="flex flex-row items-center gap-2.5 dark:text-white light:text-black text-xs md:text-sm">
+                  <input type="checkbox" class="peer hidden" />
+                  <div
+                    class="h-5 w-5 flex items-center justify-center rounded-md border border-[#a2a1a833]
+                          light:bg-[#e8e8e8] dark:bg-[#212121]
+                          peer-checked:bg-[#7152f3] transition"
+                  >
+                    <Icon icon="ci:check-big" class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100" />
+                  </div>
+                  Built and improved reusable frontend components for Web and H5 apps.
+                </label>
+
+                <!-- ITEM 2 -->
+                <label class="flex flex-row items-center gap-2.5 dark:text-white light:text-black text-xs md:text-sm">
+                  <input type="checkbox" class="peer hidden" />
+                  <div
+                    class="h-5 w-5 flex items-center justify-center rounded-md border border-[#a2a1a833]
+                          light:bg-[#e8e8e8] dark:bg-[#212121]
+                          peer-checked:bg-[#7152f3] transition"
+                  >
+                    <Icon icon="ci:check-big" class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100" />
+                  </div>
+                  Implemented UI/UX enhancements to increase user engagement.
+                </label>
+
+                <!-- ITEM 3 -->
+                <label class="flex flex-row items-center gap-2.5 dark:text-white light:text-black text-xs md:text-sm">
+                  <input type="checkbox" class="peer hidden" />
+                  <div
+                    class="h-5 w-5 flex items-center justify-center rounded-md border border-[#a2a1a833]
+                          light:bg-[#e8e8e8] dark:bg-[#212121]
+                          peer-checked:bg-[#7152f3] transition"
+                  >
+                    <Icon icon="ci:check-big" class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100" />
+                  </div>
+                  Integrated APIs for seamless communication between frontend and backend.
+                </label>
+
+                <!-- ITEM 4 -->
+                <label class="flex flex-row items-center gap-2.5 dark:text-white light:text-black text-xs md:text-sm">
+                  <input type="checkbox" class="peer hidden" />
+                  <div
+                    class="h-5 w-5 flex items-center justify-center rounded-md border border-[#a2a1a833]
+                          light:bg-[#e8e8e8] dark:bg-[#212121]
+                          peer-checked:bg-[#7152f3] transition"
+                  >
+                    <Icon icon="ci:check-big" class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100" />
+                  </div>
+                  Ensured scalable and maintainable code using software engineering best practices.
+                </label>
+
+              </div>
+
+              <!-- IMPACT -->
+              <h3 class="mt-6 font-semibold text-xl">Impact</h3>
+
+              <div class="mt-3 space-y-1 text-left mx-auto">
+
+                <!-- IMPACT ITEM 1 -->
+                <label class="flex flex-row items-center gap-2.5 dark:text-white light:text-black text-xs md:text-sm">
+                  <input type="checkbox" class="peer hidden" />
+                  <div
+                    class="h-5 w-5 flex items-center justify-center rounded-md border border-[#a2a1a833]
+                          light:bg-[#e8e8e8] dark:bg-[#212121]
+                          peer-checked:bg-[#7152f3] transition"
+                  >
+                    <Icon icon="ci:check-big" class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100" />
+                  </div>
+                  Improved platform performance and UI consistency.
+                </label>
+
+                <!-- IMPACT ITEM 2 -->
+                <label class="flex flex-row items-center gap-2.5 dark:text-white light:text-black text-xs md:text-sm">
+                  <input type="checkbox" class="peer hidden" />
+                  <div
+                    class="h-5 w-5 flex items-center justify-center rounded-md border border-[#a2a1a833]
+                          light:bg-[#e8e8e8] dark:bg-[#212121]
+                          peer-checked:bg-[#7152f3] transition"
+                  >
+                    <Icon icon="ci:check-big" class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100" />
+                  </div>
+                  Reduced development time with modular, reusable components.
+                </label>
+
+                <!-- IMPACT ITEM 3 -->
+                <label class="flex flex-row items-center gap-2.5 dark:text-white light:text-black text-xs md:text-sm">
+                  <input type="checkbox" class="peer hidden" />
+                  <div
+                    class="h-5 w-5 flex items-center justify-center rounded-md border border-[#a2a1a833]
+                          light:bg-[#e8e8e8] dark:bg-[#212121]
+                          peer-checked:bg-[#7152f3] transition"
+                  >
+                    <Icon icon="ci:check-big" class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100" />
+                  </div>
+                  Maintained consistent UI across desktop, mobile web, and H5 apps.
+                </label>
+
+              </div>
+
+              <span class="block mt-6 text-sm opacity-70">
+                Tech: Vue 3, Tailwind, API Integration, H5 apps
+              </span>
+            </div>
+
+
+          </div>
+
+          <div class="w-screen flex-shrink-0 flex flex-col items-center bg-transparent ">
+            <!-- FULL WIDTH IMAGE CENTERED -->
+            <div class="w-full flex items-center justify-center">
+              <img
+                src="/img/leads.png"
+                alt="Project Image"
+                class="w-full max-w-[800px] object-contain mx-auto rounded-lg"
+              />
+            </div>
+
+            <!-- TEXT BELOW -->
+            <div class="mt-3 max-w-3xl mx-auto">
+              <h1 class="text-2xl font-bold">Project: E-Commerce Marketplace Platform</h1>
+
+              <!-- WHAT YOU DID -->
+              <div class="mt-2 space-y-1 text-left mx-auto">
+
+                <!-- ITEM 1 -->
+                <label class="flex flex-row items-center gap-2.5 dark:text-white light:text-black text-xs md:text-sm">
+                  <input type="checkbox" class="peer hidden" />
+                  <div
+                    class="h-5 w-5 flex items-center justify-center rounded-md border border-[#a2a1a833]
+                          light:bg-[#e8e8e8] dark:bg-[#212121]
+                          peer-checked:bg-[#7152f3] transition"
+                  >
+                    <Icon icon="ci:check-big" class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100" />
+                  </div>
+                  Built and improved reusable frontend components for Web and H5 apps.
+                </label>
+
+                <!-- ITEM 2 -->
+                <label class="flex flex-row items-center gap-2.5 dark:text-white light:text-black text-xs md:text-sm">
+                  <input type="checkbox" class="peer hidden" />
+                  <div
+                    class="h-5 w-5 flex items-center justify-center rounded-md border border-[#a2a1a833]
+                          light:bg-[#e8e8e8] dark:bg-[#212121]
+                          peer-checked:bg-[#7152f3] transition"
+                  >
+                    <Icon icon="ci:check-big" class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100" />
+                  </div>
+                  Implemented UI/UX enhancements to increase user engagement.
+                </label>
+
+                <!-- ITEM 3 -->
+                <label class="flex flex-row items-center gap-2.5 dark:text-white light:text-black text-xs md:text-sm">
+                  <input type="checkbox" class="peer hidden" />
+                  <div
+                    class="h-5 w-5 flex items-center justify-center rounded-md border border-[#a2a1a833]
+                          light:bg-[#e8e8e8] dark:bg-[#212121]
+                          peer-checked:bg-[#7152f3] transition"
+                  >
+                    <Icon icon="ci:check-big" class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100" />
+                  </div>
+                  Integrated APIs for seamless communication between frontend and backend.
+                </label>
+
+                <!-- ITEM 4 -->
+                <label class="flex flex-row items-center gap-2.5 dark:text-white light:text-black text-xs md:text-sm">
+                  <input type="checkbox" class="peer hidden" />
+                  <div
+                    class="h-5 w-5 flex items-center justify-center rounded-md border border-[#a2a1a833]
+                          light:bg-[#e8e8e8] dark:bg-[#212121]
+                          peer-checked:bg-[#7152f3] transition"
+                  >
+                    <Icon icon="ci:check-big" class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100" />
+                  </div>
+                  Ensured scalable and maintainable code using software engineering best practices.
+                </label>
+
+              </div>
+
+              <!-- IMPACT -->
+              <h3 class="mt-6 font-semibold text-xl">Impact</h3>
+
+              <div class="mt-3 space-y-1 text-left mx-auto">
+
+                <!-- IMPACT ITEM 1 -->
+                <label class="flex flex-row items-center gap-2.5 dark:text-white light:text-black text-xs md:text-sm">
+                  <input type="checkbox" class="peer hidden" />
+                  <div
+                    class="h-5 w-5 flex items-center justify-center rounded-md border border-[#a2a1a833]
+                          light:bg-[#e8e8e8] dark:bg-[#212121]
+                          peer-checked:bg-[#7152f3] transition"
+                  >
+                    <Icon icon="ci:check-big" class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100" />
+                  </div>
+                  Improved platform performance and UI consistency.
+                </label>
+
+                <!-- IMPACT ITEM 2 -->
+                <label class="flex flex-row items-center gap-2.5 dark:text-white light:text-black text-xs md:text-sm">
+                  <input type="checkbox" class="peer hidden" />
+                  <div
+                    class="h-5 w-5 flex items-center justify-center rounded-md border border-[#a2a1a833]
+                          light:bg-[#e8e8e8] dark:bg-[#212121]
+                          peer-checked:bg-[#7152f3] transition"
+                  >
+                    <Icon icon="ci:check-big" class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100" />
+                  </div>
+                  Reduced development time with modular, reusable components.
+                </label>
+
+                <!-- IMPACT ITEM 3 -->
+                <label class="flex flex-row items-center gap-2.5 dark:text-white light:text-black text-xs md:text-sm">
+                  <input type="checkbox" class="peer hidden" />
+                  <div
+                    class="h-5 w-5 flex items-center justify-center rounded-md border border-[#a2a1a833]
+                          light:bg-[#e8e8e8] dark:bg-[#212121]
+                          peer-checked:bg-[#7152f3] transition"
+                  >
+                    <Icon icon="ci:check-big" class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100" />
+                  </div>
+                  Maintained consistent UI across desktop, mobile web, and H5 apps.
+                </label>
+
+              </div>
+
+              <span class="block mt-6 text-sm opacity-70">
+                Tech: Vue 3, Tailwind, API Integration, H5 apps
+              </span>
+            </div>
+
+
+          </div>
+
+
+
         </div>
       </section>
+
+
+
+      <div class="space-y-50 w-full max-w-7xl mx-auto px-4">
+        <div
+          id="box-0"
+          class=" flex flex-col items-center justify-center text-sm md:text-lg mt-10"
+        >
+          <h2 class="text-4xl font-bold text-center">ABOUT ME</h2>
+          <h2 class="text-xl font-bold mb-16 text-center opacity-50">Personal</h2>
+          <p class="about-text-split">
+            The interest in computer programming began in 2016 after exploring a webpage’s elements and realizing that everything seen in the browser was built with HTML and CSS. That moment sparked a deep curiosity that ultimately evolved into a passion for development. Today, that early fascination has grown into a career as a Frontend Developer with over three years of hands-on experience delivering modern, responsive, and high-quality web applications.
+          </p>
+
+          <!-- From Uiverse.io by Javierrocadev -->
+          <div class="w-full flex items-center justify-center gap-2 md:gap-12 mt-16">
+            <div
+                class="hover:-translate-y-2 group bg-white/10 backdrop-blur-xl border border-white/20
+                duration-500 w-44 h-44 flex text-neutral-600 flex-col justify-center
+                items-center relative rounded-xl overflow-hidden shadow-xl"
+              >
+
+                <svg
+                  viewBox="0 0 200 200"
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="absolute blur z-10 fill-red-300 duration-500 group-hover:blur-none group-hover:scale-105"
+                >
+                  <path
+                    transform="translate(100 100)"
+                    d="M39.5,-49.6C54.8,-43.2,73.2,-36.5,78.2,-24.6C83.2,-12.7,74.8,4.4,69,22.5C63.3,40.6,60.2,59.6,49.1,64.8C38.1,70,19,61.5,0.6,60.7C-17.9,59.9,-35.9,67,-47.2,61.9C-58.6,56.7,-63.4,39.5,-70,22.1C-76.6,4.7,-84.9,-12.8,-81.9,-28.1C-79,-43.3,-64.6,-56.3,-49.1,-62.5C-33.6,-68.8,-16.8,-68.3,-2.3,-65.1C12.1,-61.9,24.2,-55.9,39.5,-49.6Z"
+                  ></path>
+                </svg>
+
+                <div class="z-10 flex flex-col justify-center items-center text-white drop-shadow">
+                  <span class="font-bold text-5xl ml-2">3</span>
+                  <p class="text-center text-xs md:text-sm">Years of Experience</p>
+                </div>
+            </div>
+            <div
+                class="hover:-translate-y-2 group bg-white/10 backdrop-blur-xl border border-white/20
+                duration-500 w-44 h-44 flex text-neutral-600 flex-col justify-center
+                items-center relative rounded-xl overflow-hidden shadow-xl"
+              >
+
+                <svg
+                  viewBox="0 0 200 200"
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="absolute blur z-10 fill-red-300 duration-500 group-hover:blur-none group-hover:scale-105"
+                >
+                  <path
+                    transform="translate(100 100)"
+                    d="M39.5,-49.6C54.8,-43.2,73.2,-36.5,78.2,-24.6C83.2,-12.7,74.8,4.4,69,22.5C63.3,40.6,60.2,59.6,49.1,64.8C38.1,70,19,61.5,0.6,60.7C-17.9,59.9,-35.9,67,-47.2,61.9C-58.6,56.7,-63.4,39.5,-70,22.1C-76.6,4.7,-84.9,-12.8,-81.9,-28.1C-79,-43.3,-64.6,-56.3,-49.1,-62.5C-33.6,-68.8,-16.8,-68.3,-2.3,-65.1C12.1,-61.9,24.2,-55.9,39.5,-49.6Z"
+                  ></path>
+                </svg>
+
+                <div class="z-10 flex flex-col justify-center items-center text-white drop-shadow">
+                  <span class="font-bold text-5xl ml-2">9</span>
+                  <p class="text-center text-xs md:text-sm">Completed Projects</p>
+                </div>
+            </div>
+                        <div
+                class="hover:-translate-y-2 group bg-white/10 backdrop-blur-xl border border-white/20
+                duration-500 w-44 h-44 flex text-neutral-600 flex-col justify-center
+                items-center relative rounded-xl overflow-hidden shadow-xl"
+              >
+
+                <svg
+                  viewBox="0 0 200 200"
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="absolute blur z-10 fill-red-300 duration-500 group-hover:blur-none group-hover:scale-105"
+                >
+                  <path
+                    transform="translate(100 100)"
+                    d="M39.5,-49.6C54.8,-43.2,73.2,-36.5,78.2,-24.6C83.2,-12.7,74.8,4.4,69,22.5C63.3,40.6,60.2,59.6,49.1,64.8C38.1,70,19,61.5,0.6,60.7C-17.9,59.9,-35.9,67,-47.2,61.9C-58.6,56.7,-63.4,39.5,-70,22.1C-76.6,4.7,-84.9,-12.8,-81.9,-28.1C-79,-43.3,-64.6,-56.3,-49.1,-62.5C-33.6,-68.8,-16.8,-68.3,-2.3,-65.1C12.1,-61.9,24.2,-55.9,39.5,-49.6Z"
+                  ></path>
+                </svg>
+
+                <div class="z-10 flex flex-col justify-center items-center text-white drop-shadow">
+                  <span class="font-bold text-5xl ml-2">4</span>
+                  <p class="text-center text-xs md:text-sm">Companies Worked</p>
+                </div>
+            </div>
+          </div>
+
+          <div class="mt-16">
+            <a
+              href="/file/Olivares_CV_Frontend.pdf"
+              download="Mark-Olivares-CV.pdf"
+              class="flex overflow-hidden items-center text-sm font-medium focus-visible:outline-none
+              focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none
+              disabled:opacity-50 bg-black text-white shadow hover:bg-black/90 h-12 px-4 py-2
+              max-w-52 whitespace-pre md:flex group relative w-full justify-center gap-2
+              rounded-md transition-all duration-300 ease-out hover:ring-2 hover:ring-black
+              hover:ring-offset-2"
+            >
+              <span
+                class="absolute right-0 -mt-12 h-32 w-8 translate-x-12 rotate-12 bg-white
+                opacity-10 transition-all duration-1000 ease-out group-hover:-translate-x-40"
+              ></span>
+
+              <div class="flex items-center">
+                <span class="ml-1 text-white">Download CV</span>
+              </div>
+
+              <div class="ml-2 flex items-center gap-1 text-sm md:flex">
+                <Icon icon="mdi:file-download" class="h-5 w-5 text-gray-500 transition-all duration-300 group-hover:text-blue-500" />
+              </div>
+            </a>
+          </div>
+
+        </div>
+
+        <div
+          id="box-1"
+          class="w-full flex flex-col items-center justify-center text-3xl font-bold mt-8
+          "
+        >
+          <h2 class="text-4xl font-bold text-center">SKILLS</h2>
+          <h2 class="text-xl font-bold mb-16 text-center opacity-50">My Technical Level</h2>
+
+          <div class="flex flex-wrap justify-center gap-4 w-full">
+            <!-- Frontend card -->
+            <div class="group relative w-full md:w-[380px] max-w-sm">
+              <div class="relative overflow-hidden rounded-2xl bg-slate-950 shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:shadow-indigo-500/10">
+                <div class="absolute -left-16 -top-16 h-32 w-32 rounded-full bg-gradient-to-br from-indigo-500/20 to-purple-500/100 blur-2xl transition-all duration-500 group-hover:scale-250 group-hover:opacity-70" />
+                <div class="absolute -right-16 -bottom-16 h-32 w-32 rounded-full bg-gradient-to-br from-purple-500/20 to-indigo-500/100 blur-2xl transition-all duration-500 group-hover:scale-250 group-hover:opacity-70" />
+
+                <div class="relative p-6">
+                  <div class="absolute right-6 top-6">
+                    <Icon icon="mingcute:asterisk-fill" class="h-10 w-10 text-indigo-500/90" />
+                  </div>
+
+                  <div class="flex items-center text-xl">
+                    <span :class="{ 'text-white': !isDark }">Frontend Developer</span>
+                  </div>
+
+                  <div class="-mt-1">
+                    <h3 class="text-sm font-semibold text-blue-500/90">More than 3 years</h3>
+                  </div>
+
+                  <div class="mt-6 flex items-center gap-4">
+                    <div class="grid grid-cols-5 gap-2">
+                      <div v-for="item in techList.frontend" :key="item.name" class="rounded-xl p-2">
+                        <div class="flex items-center justify-center gap-3 group cursor-pointer">
+                          <Icon :icon="item.icon || 'solar:code-bold'" class="h-12 w-12 text-gray-500 transition-all duration-300 hover:brightness-150 hover:text-yellow-300 hover:scale-110" />
+                        </div>
+                        <p class="mt-1 text-[9px] text-slate-400 text-center">{{ item.name || '-' }}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Backend card -->
+            <div class="group relative w-full md:w-[380px] max-w-sm">
+              <div class="relative overflow-hidden rounded-2xl bg-slate-950 shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:shadow-indigo-500/10">
+                <div class="absolute -left-16 -top-16 h-32 w-32 rounded-full bg-gradient-to-br from-indigo-500/20 to-purple-500/100 blur-2xl transition-all duration-500 group-hover:scale-250 group-hover:opacity-70" />
+                <div class="absolute -right-16 -bottom-16 h-32 w-32 rounded-full bg-gradient-to-br from-purple-500/20 to-indigo-500/100 blur-2xl transition-all duration-500 group-hover:scale-250 group-hover:opacity-70" />
+
+                <div class="relative p-6">
+                  <div class="absolute right-6 top-6">
+                    <Icon icon="solar:database-line-duotone" class="h-10 w-10 text-indigo-500/90" />
+                  </div>
+
+                  <div class="flex items-center text-xl">
+                    <span :class="{ 'text-white': !isDark }">Backend Developer</span>
+                  </div>
+
+                  <div class="-mt-1">
+                    <h3 class="text-sm font-semibold text-blue-500/80">More than 2 Years</h3>
+                  </div>
+
+                  <div class="mt-6 flex items-center gap-4">
+                    <div class="grid grid-cols-5 gap-2">
+                      <div v-for="item in techList.backend" :key="item.name" class="rounded-xl p-2">
+                        <div class="flex items-center justify-center gap-3 cursor-pointer">
+                          <Icon :icon="item.icon || 'solar:code-bold'" class="h-12 w-12 text-gray-500 transition-all duration-300 hover:brightness-150 hover:text-yellow-300 hover:scale-110" />
+                        </div>
+                        <p class="mt-1 text-[9px] text-slate-400 text-center">{{ item.name || '-' }}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Others card -->
+            <div class="group relative w-full md:w-[380px] max-w-sm">
+              <div class="relative overflow-hidden rounded-2xl bg-slate-950 shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:shadow-indigo-500/10">
+                <div class="absolute -left-16 -top-16 h-32 w-32 rounded-full bg-gradient-to-br from-indigo-500/20 to-purple-500/100 blur-2xl transition-all duration-500 group-hover:scale-250 group-hover:opacity-70" />
+                <div class="absolute -right-16 -bottom-16 h-32 w-32 rounded-full bg-gradient-to-br from-purple-500/20 to-indigo-500/100 blur-2xl transition-all duration-500 group-hover:scale-250 group-hover:opacity-70" />
+
+                <div class="relative p-6">
+                  <div class="absolute right-6 top-6">
+                    <Icon icon="mdi:brain" class="h-10 w-10 text-indigo-500/90" />
+                  </div>
+
+                  <div class="flex items-center text-xl">
+                    <span :class="{ 'text-white': !isDark }">OTHERS</span>
+                  </div>
+
+                  <div class="-mt-1">
+                    <h3 class="text-sm font-semibold text-blue-500/80">More than 3 years</h3>
+                  </div>
+
+                  <div class="mt-6 flex items-center gap-4">
+                    <div class="grid grid-cols-5 gap-2">
+                      <div v-for="item in techList.other" :key="item.name" class="rounded-xl p-2">
+                        <div class="flex items-center justify-center gap-3 cursor-pointer">
+                          <Icon :icon="item.icon || 'solar:code-bold'" class="h-12 w-12 text-gray-500 transition-all duration-300 hover:brightness-150 hover:text-yellow-300 hover:scale-110" />
+                        </div>
+                        <p class="mt-1 text-[9px] text-slate-400 text-center">{{ item.name || '-' }}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <WorkExperience :is-dark="isDark" :data="techList" />
+      </div>
     </main>
 
-    <!-- ABOUT (snap 0) -->
-    <section id="vertical-snap-0" class="h-screen flex items-center justify-center relative z-10 snap-section">
-      <div class="w-full flex flex-col items-center justify-center text-3xl font-bold max-w-4xl mx-auto px-4">
-        <h2 class="text-4xl font-bold text-center">ABOUT ME</h2>
-        <h2 class="text-xl font-bold mb-16 text-center opacity-50">Personal</h2>
-        <p class="about-text-split text-lg md:text-xl text-center">
-          My interest in Computer Programming started back in 2011 when I decided to inspect elements in the browser —
-          turns out that everything I saw was HTML and CSS! Fast-forward and I'm now a Frontend Developer with 4+ years
-          of work experience.
-        </p>
+    <!-- FOOTER -->
+    <section
+      id="contact-section"
+      class="min-h-[100vh] flex flex-col items-center justify-center bg-green-600 text-black relative p-5 overflow-hidden"
+      style="background: linear-gradient(114.41deg, #0ae448 20.74%, #abff84 65.5%);"
+    >
+      <h2 class="split font-bold text-6xl md:text-7xl text-center">Get in Touch</h2>
+      <p class="text-center max-w-xl">
+        Although I’m not currently looking for any new opportunities, my inbox is always open.
+        Whether you have a question or just want to say hi, I’ll try my best to get back to you!
+      </p>
 
-        <div class="w-full flex items-center justify-center gap-2 md:gap-12 mt-16">
-          <div class="hover:-translate-y-2 group bg-white/10 backdrop-blur-xl border border-white/20 duration-500 w-44 h-44 flex text-neutral-600 flex-col justify-center items-center relative rounded-xl overflow-hidden shadow-xl">
-            <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="absolute blur z-10 fill-red-300 duration-500 group-hover:blur-none group-hover:scale-105">
-              <path transform="translate(100 100)" d="M39.5,-49.6C54.8,-43.2,73.2,-36.5,78.2,-24.6C83.2,-12.7,74.8,4.4,69,22.5C63.3,40.6,60.2,59.6,49.1,64.8C38.1,70,19,61.5,0.6,60.7C-17.9,59.9,-35.9,67,-47.2,61.9C-58.6,56.7,-63.4,39.5,-70,22.1C-76.6,4.7,-84.9,-12.8,-81.9,-28.1C-79,-43.3,-64.6,-56.3,-49.1,-62.5C-33.6,-68.8,-16.8,-68.3,-2.3,-65.1C12.1,-61.9,24.2,-55.9,39.5,-49.6Z"/>
-            </svg>
+      <a
+        href="mailto:olivaresmarkanthony14@gmail.com"
+        class="flex overflow-hidden items-center text-sm font-medium focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-black text-white shadow hover:bg-black/90 h-12 px-4 py-2 max-w-52 whitespace-pre md:flex group relative w-full justify-center gap-2 rounded-md transition-all duration-300 ease-out hover:ring-2 hover:ring-black hover:ring-offset-2 mt-6"
+      >
+        <span
+          class="absolute right-0 -mt-12 h-32 w-8 translate-x-12 rotate-12 bg-white opacity-10 transition-all duration-1000 ease-out group-hover:-translate-x-40"
+        ></span>
 
-            <div class="z-20 flex flex-col justify-center items-center text-white drop-shadow">
-              <span class="font-bold text-5xl ml-2">34+</span>
-              <p class="text-center text-sm">Years of Experience</p>
-            </div>
-          </div>
-
-          <div class="hover:-translate-y-2 group bg-white/10 backdrop-blur-xl border border-white/20 duration-500 w-44 h-44 flex text-neutral-600 flex-col justify-center items-center relative rounded-xl overflow-hidden shadow-xl">
-            <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="absolute blur z-10 fill-red-300 duration-500 group-hover:blur-none group-hover:scale-105">
-              <path transform="translate(100 100)" d="M39.5,-49.6C54.8,-43.2,73.2,-36.5,78.2,-24.6C83.2,-12.7,74.8,4.4,69,22.5C63.3,40.6,60.2,59.6,49.1,64.8C38.1,70,19,61.5,0.6,60.7C-17.9,59.9,-35.9,67,-47.2,61.9C-58.6,56.7,-63.4,39.5,-70,22.1C-76.6,4.7,-84.9,-12.8,-81.9,-28.1C-79,-43.3,-64.6,-56.3,-49.1,-62.5C-33.6,-68.8,-16.8,-68.3,-2.3,-65.1C12.1,-61.9,24.2,-55.9,39.5,-49.6Z"/>
-            </svg>
-
-            <div class="z-20 flex flex-col justify-center items-center text-white drop-shadow">
-              <span class="font-bold text-5xl ml-2">34+</span>
-              <p class="text-center text-sm">Completed Projects</p>
-            </div>
-          </div>
-
-          <div class="hover:-translate-y-2 group bg-white/10 backdrop-blur-xl border border-white/20 duration-500 w-44 h-44 flex text-neutral-600 flex-col justify-center items-center relative rounded-xl overflow-hidden shadow-xl">
-            <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="absolute blur z-10 fill-red-300 duration-500 group-hover:blur-none group-hover:scale-105">
-              <path transform="translate(100 100)" d="M39.5,-49.6C54.8,-43.2,73.2,-36.5,78.2,-24.6C83.2,-12.7,74.8,4.4,69,22.5C63.3,40.6,60.2,59.6,49.1,64.8C38.1,70,19,61.5,0.6,60.7C-17.9,59.9,-35.9,67,-47.2,61.9C-58.6,56.7,-63.4,39.5,-70,22.1C-76.6,4.7,-84.9,-12.8,-81.9,-28.1C-79,-43.3,-64.6,-56.3,-49.1,-62.5C-33.6,-68.8,-16.8,-68.3,-2.3,-65.1C12.1,-61.9,24.2,-55.9,39.5,-49.6Z"/>
-            </svg>
-
-            <div class="z-20 flex flex-col justify-center items-center text-white drop-shadow">
-              <span class="font-bold text-5xl ml-2">34+</span>
-              <p class="text-center text-sm">Companies Worked</p>
-            </div>
-          </div>
+        <div class="flex items-center">
+          <span class="ml-1 text-white">Say Hi!</span>
         </div>
 
-        <div class="mt-16">
-          <a
-            href="/file/Olivares_CV_Frontend.pdf"
-            download="Mark-Olivares-CV.pdf"
-            class="flex overflow-hidden items-center text-sm font-medium focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-black text-white shadow hover:bg-black/90 h-12 px-4 py-2 max-w-52 whitespace-pre md:flex group relative w-full justify-center gap-2 rounded-md transition-all duration-300 ease-out hover:ring-2 hover:ring-black hover:ring-offset-2"
-          >
-            <span class="absolute right-0 -mt-12 h-32 w-8 translate-x-12 rotate-12 bg-white opacity-10 transition-all duration-1000 ease-out group-hover:-translate-x-40" />
-            <div class="flex items-center">
-              <span class="ml-1 text-white">Download CV</span>
-            </div>
-            <div class="ml-2 flex items-center gap-1 text-sm md:flex">
-              <Icon icon="line-md:download-twotone-loop" class="h-6 w-6 text-gray-500 transition-all duration-300 group-hover:text-yellow-300" />
-            </div>
-          </a>
+        <div class="ml-2 flex items-center gap-1 text-sm md:flex">
+          <Icon
+            icon="mdi:hand-wave-outline"
+            class="h-5 w-5 text-gray-500 transition-all duration-300 group-hover:text-yellow-300 animate__animated animate__headShake animate__infinite"
+          />
         </div>
-      </div>
+      </a>
+
+      <!-- ⭐ FOOTER ADDED HERE -->
+      <p class="absolute bottom-4 text-sm text-black/70 font-medium text-center w-full">
+        Designed &amp; Built by <span class="font-semibold text-black">Mark Anthony E. Olivares</span>
+      </p>
     </section>
 
-    <!-- SKILLS (snap 1) -->
-    <section id="vertical-snap-1" class="h-screen flex items-center justify-center relative z-10 snap-section">
-      <div class="w-full flex flex-col items-center justify-center text-3xl font-bold max-w-7xl mx-auto px-4">
-        <h2 class="text-4xl font-bold text-center">SKILLS</h2>
-        <h2 class="text-xl font-bold mb-16 text-center opacity-50">My Technical Level</h2>
 
-        <div class="flex flex-wrap justify-center gap-4 w-full">
-          <!-- Frontend card -->
-          <div class="group relative w-full md:w-[380px] max-w-sm">
-            <div class="relative overflow-hidden rounded-2xl bg-slate-950 shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:shadow-indigo-500/10">
-              <div class="absolute -left-16 -top-16 h-32 w-32 rounded-full bg-gradient-to-br from-indigo-500/20 to-purple-500/100 blur-2xl transition-all duration-500 group-hover:scale-250 group-hover:opacity-70" />
-              <div class="absolute -right-16 -bottom-16 h-32 w-32 rounded-full bg-gradient-to-br from-purple-500/20 to-indigo-500/100 blur-2xl transition-all duration-500 group-hover:scale-250 group-hover:opacity-70" />
-
-              <div class="relative p-6">
-                <div class="absolute right-6 top-6">
-                  <Icon icon="mingcute:asterisk-fill" class="h-10 w-10 text-indigo-500/90" />
-                </div>
-
-                <div class="flex items-center text-xl">
-                  <span :class="{ 'text-white': !isDark }">Frontend Developer</span>
-                </div>
-
-                <div class="-mt-1">
-                  <h3 class="text-sm font-semibold text-blue-500/90">More than 3 years</h3>
-                </div>
-
-                <div class="mt-6 flex items-center gap-4">
-                  <div class="grid grid-cols-5 gap-2">
-                    <div v-for="item in techList.frontend" :key="item.name" class="rounded-xl p-2">
-                      <div class="flex items-center justify-center gap-3 group cursor-pointer">
-                        <Icon :icon="item.icon || 'solar:code-bold'" class="h-12 w-12 text-gray-500 transition-all duration-300 hover:brightness-150 hover:text-yellow-300 hover:scale-110" />
-                      </div>
-                      <p class="mt-1 text-[9px] text-slate-400 text-center">{{ item.name || '-' }}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Backend card -->
-          <div class="group relative w-full md:w-[380px] max-w-sm">
-            <div class="relative overflow-hidden rounded-2xl bg-slate-950 shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:shadow-indigo-500/10">
-              <div class="absolute -left-16 -top-16 h-32 w-32 rounded-full bg-gradient-to-br from-indigo-500/20 to-purple-500/100 blur-2xl transition-all duration-500 group-hover:scale-250 group-hover:opacity-70" />
-              <div class="absolute -right-16 -bottom-16 h-32 w-32 rounded-full bg-gradient-to-br from-purple-500/20 to-indigo-500/100 blur-2xl transition-all duration-500 group-hover:scale-250 group-hover:opacity-70" />
-
-              <div class="relative p-6">
-                <div class="absolute right-6 top-6">
-                  <Icon icon="solar:database-line-duotone" class="h-10 w-10 text-indigo-500/90" />
-                </div>
-
-                <div class="flex items-center text-xl">
-                  <span :class="{ 'text-white': !isDark }">Backend Developer</span>
-                </div>
-
-                <div class="-mt-1">
-                  <h3 class="text-sm font-semibold text-blue-500/80">More than 2 Years</h3>
-                </div>
-
-                <div class="mt-6 flex items-center gap-4">
-                  <div class="grid grid-cols-5 gap-2">
-                    <div v-for="item in techList.backend" :key="item.name" class="rounded-xl p-2">
-                      <div class="flex items-center justify-center gap-3 cursor-pointer">
-                        <Icon :icon="item.icon || 'solar:code-bold'" class="h-12 w-12 text-gray-500 transition-all duration-300 hover:brightness-150 hover:text-yellow-300 hover:scale-110" />
-                      </div>
-                      <p class="mt-1 text-[9px] text-slate-400 text-center">{{ item.name || '-' }}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Others card -->
-          <div class="group relative w-full md:w-[380px] max-w-sm">
-            <div class="relative overflow-hidden rounded-2xl bg-slate-950 shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:shadow-indigo-500/10">
-              <div class="absolute -left-16 -top-16 h-32 w-32 rounded-full bg-gradient-to-br from-indigo-500/20 to-purple-500/100 blur-2xl transition-all duration-500 group-hover:scale-250 group-hover:opacity-70" />
-              <div class="absolute -right-16 -bottom-16 h-32 w-32 rounded-full bg-gradient-to-br from-purple-500/20 to-indigo-500/100 blur-2xl transition-all duration-500 group-hover:scale-250 group-hover:opacity-70" />
-
-              <div class="relative p-6">
-                <div class="absolute right-6 top-6">
-                  <Icon icon="mdi:brain" class="h-10 w-10 text-indigo-500/90" />
-                </div>
-
-                <div class="flex items-center text-xl">
-                  <span :class="{ 'text-white': !isDark }">OTHERS</span>
-                </div>
-
-                <div class="-mt-1">
-                  <h3 class="text-sm font-semibold text-blue-500/80">More than 3 years</h3>
-                </div>
-
-                <div class="mt-6 flex items-center gap-4">
-                  <div class="grid grid-cols-5 gap-2">
-                    <div v-for="item in techList.other" :key="item.name" class="rounded-xl p-2">
-                      <div class="flex items-center justify-center gap-3 cursor-pointer">
-                        <Icon :icon="item.icon || 'solar:code-bold'" class="h-12 w-12 text-gray-500 transition-all duration-300 hover:brightness-150 hover:text-yellow-300 hover:scale-110" />
-                      </div>
-                      <p class="mt-1 text-[9px] text-slate-400 text-center">{{ item.name || '-' }}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- End -->
-    <section class="h-screen flex items-center justify-center text-white relative z-10 snap-section" style="background: linear-gradient(114.41deg, #0ae448 20.74%, #abff84 65.5%);">
-      <h2 class="text-4xl">End of Content</h2>
-    </section>
-  </div>
+</div>
 </template>

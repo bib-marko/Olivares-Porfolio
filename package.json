@@ -17,6 +17,7 @@
   "dependencies": {
     "@iconify/vue": "^5.0.0",
     "@unhead/vue": "^2.0.19",
+    "animate.css": "^4.1.1",
     "geist": "^1.5.1",
     "gsap": "^3.13.0",
     "pinia": "^3.0.3",
