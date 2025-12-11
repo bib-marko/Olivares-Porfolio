@@ -14,7 +14,7 @@ const workExperience = [
 
 const education = [
   { role: "Bachelor of Science in Information Technology", company: "University of Cabuyao", date: "06/2018 – 06/2022" },
-  { role: "Fullstack Developer", company: "Asian Institute of Computer Studies", date: "06/2016 – 06/2018" }
+  { role: "Senior Highschool", company: "Asian Institute of Computer Studies", date: "06/2016 – 06/2018" }
 ];
 </script>
 

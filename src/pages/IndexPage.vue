@@ -6,6 +6,7 @@ import { SplitText } from 'gsap/SplitText';
 import { Icon } from '@iconify/vue';
 import 'animate.css';
 import WorkExperience from '@/components/WorkExperience.vue'
+import { useProjectList } from '@/composables/useProjectList'
 
 gsap.registerPlugin(ScrollTrigger);
 gsap.registerPlugin(SplitText);
@@ -13,6 +14,7 @@ gsap.registerPlugin(SplitText);
 // ---------------------- THEME TOGGLE ----------------------
 const isDark = ref(false);
 const STORAGE_KEY = 'user-theme';
+const { projectList } = useProjectList();
 
 const updateHtmlClass = (newIsDark: boolean) => {
   document.documentElement.classList.toggle('dark', newIsDark);
@@ -324,15 +326,71 @@ onUnmounted(() => {
   ScrollTrigger.getAll().forEach((t) => t.kill());
   document.documentElement.style.scrollBehavior = 'auto';
 });
+
+// ---------------------- FULLSCREEN IMAGE VIEWER ----------------------
+const fullscreenImg = ref<string | null>(null);
+
+const openFullscreen = (img: string) => {
+  fullscreenImg.value = img;
+
+  nextTick(() => {
+    const tl = gsap.timeline();
+    tl.fromTo(
+      "#fullscreen-viewer",
+      { opacity: 0 },
+      { opacity: 1, duration: 0.25, ease: "power2.out" }
+    );
+    tl.fromTo(
+      "#fullscreen-img",
+      { scale: 0.4, opacity: 0, y: 80 },
+      { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "expo.out" },
+      "<"
+    );
+  });
+};
+
+const closeFullscreen = () => {
+  const tl = gsap.timeline({
+    onComplete: () => {
+      fullscreenImg.value = null;
+    }
+  });
+
+  tl.to("#fullscreen-img", {
+    scale: 0.4,
+    opacity: 0,
+    duration: 0.3,
+    ease: "expo.in"
+  });
+
+  tl.to(
+    "#fullscreen-viewer",
+    {
+      opacity: 0,
+      duration: 0.2,
+      ease: "power2.inOut"
+    },
+    "<"
+  );
+};
+
+// ESC key closes viewer
+window.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") closeFullscreen();
+});
+
+
 </script>
 
 <template>
 <div
   class="min-h-screen transition-colors duration-500 relative overflow-hidden"
-  :class="{
-    'bg-[#0E100F] text-gray-900 dark:text-gray-100': isDark,
-    'bg-white text-gray-900 dark:text-gray-900': !isDark,
-  }"
+    :class="[
+      isDark
+        ? 'text-gray-100 bg-[radial-gradient(129%_99%_at_112%_85%,rgb(40,40,60)_20%,rgb(10,10,20)_90%),url(https://assets.codepen.io/16327/noise-e82662fe.png)] bg-blend-color-dodge'
+        : 'text-gray-900 bg-[radial-gradient(129%_99%_at_112%_85%,rgb(223,220,255)_20%,rgb(166,158,255)_90%),url(https://assets.codepen.io/16327/noise-e82662fe.png)] bg-blend-color-dodge'
+    ]"
+
 >
 
     <div
@@ -399,7 +457,7 @@ onUnmounted(() => {
 
         </div>
 
-        <div class="w-full md:w-[45%] flex justify-center items-center mt-12 md:mt-0">
+        <div class="w-full md:w-[45%] flex justify-center items-center mt-12 md:mt-0 animate__animated animate__lightSpeedInRight">
           <img
             src="/img/myself-img-1.png"
             alt="Mark Anthony Olivares"
@@ -410,641 +468,69 @@ onUnmounted(() => {
       </div>
     </section>
 
-    <main class="max-w-full mx-auto py-80 md:py-24 px-2 relative z-10">
+    <main class="max-w-full mx-auto py-80 md:py-24 px-4 relative z-10">
       <section id="horizontal-section" class="w-full overflow-hidden py-10 h-[110vh] md:h-auto">
-        <h2 class="text-4xl font-bold mb-16 text-center">Recent Projects</h2>
+        <h2 class="text-4xl font-bold mb-8 text-center">Recent Projects</h2>
 
-      <div id="horizontal-wrapper" class="flex space-x-8 px-2 w-max">
-
-          <div class="w-screen flex-shrink-0 flex flex-col items-center bg-transparent ">
-            <!-- FULL WIDTH IMAGE CENTERED -->
-            <div class="w-full flex items-center justify-center">
+      <div id="horizontal-wrapper" class="flex space-x-12 px-2 w-max">
+        <div
+          v-for="(data, index) in projectList"
+          :key="index"
+          class="w-screen flex-shrink-0 flex flex-col items-center bg-transparent"
+        >
+          <div class="w-full flex items-center justify-center gap-4 flex-col md:flex-row relative z-10">
+            <div
+              v-for="img in data.imgUrl"
+              :key="img"
+              class="card rounded-lg outline-offset-3 outline-dashed p-1"
+            >
               <img
-                src="/img/megabet.png"
-                alt="Project Image"
-                class="w-full max-w-[800px] object-contain mx-auto rounded-lg"
+                :src="img"
+                class="w-full max-w-[350px] md:max-w-[700px] object-contain mx-auto rounded-lg cursor-pointer hover:scale-105 transition-transform duration-300"
+                @click="openFullscreen(img)"
+
               />
             </div>
-
-            <!-- TEXT BELOW -->
-            <div class="mt-3 max-w-3xl mx-auto">
-              <h1 class="text-2xl font-bold">Project: E-Commerce Marketplace Platform</h1>
-
-              <!-- WHAT YOU DID -->
-              <div class="mt-2 space-y-1 text-left mx-auto">
-
-                <!-- ITEM 1 -->
-                <label class="flex flex-row items-center gap-2.5 dark:text-white light:text-black text-xs md:text-sm">
-                  <input type="checkbox" class="peer hidden" />
-                  <div
-                    class="h-5 w-5 flex items-center justify-center rounded-md border border-[#a2a1a833]
-                          light:bg-[#e8e8e8] dark:bg-[#212121]
-                          peer-checked:bg-[#7152f3] transition"
-                  >
-                    <Icon icon="ci:check-big" class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100" />
-                  </div>
-                  Built and improved reusable frontend components for Web and H5 apps.
-                </label>
-
-                <!-- ITEM 2 -->
-                <label class="flex flex-row items-center gap-2.5 dark:text-white light:text-black text-xs md:text-sm">
-                  <input type="checkbox" class="peer hidden" />
-                  <div
-                    class="h-5 w-5 flex items-center justify-center rounded-md border border-[#a2a1a833]
-                          light:bg-[#e8e8e8] dark:bg-[#212121]
-                          peer-checked:bg-[#7152f3] transition"
-                  >
-                    <Icon icon="ci:check-big" class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100" />
-                  </div>
-                  Implemented UI/UX enhancements to increase user engagement.
-                </label>
-
-                <!-- ITEM 3 -->
-                <label class="flex flex-row items-center gap-2.5 dark:text-white light:text-black text-xs md:text-sm">
-                  <input type="checkbox" class="peer hidden" />
-                  <div
-                    class="h-5 w-5 flex items-center justify-center rounded-md border border-[#a2a1a833]
-                          light:bg-[#e8e8e8] dark:bg-[#212121]
-                          peer-checked:bg-[#7152f3] transition"
-                  >
-                    <Icon icon="ci:check-big" class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100" />
-                  </div>
-                  Integrated APIs for seamless communication between frontend and backend.
-                </label>
-
-                <!-- ITEM 4 -->
-                <label class="flex flex-row items-center gap-2.5 dark:text-white light:text-black text-xs md:text-sm">
-                  <input type="checkbox" class="peer hidden" />
-                  <div
-                    class="h-5 w-5 flex items-center justify-center rounded-md border border-[#a2a1a833]
-                          light:bg-[#e8e8e8] dark:bg-[#212121]
-                          peer-checked:bg-[#7152f3] transition"
-                  >
-                    <Icon icon="ci:check-big" class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100" />
-                  </div>
-                  Ensured scalable and maintainable code using software engineering best practices.
-                </label>
-
-              </div>
-
-              <!-- IMPACT -->
-              <h3 class="mt-6 font-semibold text-xl">Impact</h3>
-
-              <div class="mt-3 space-y-1 text-left mx-auto">
-
-                <!-- IMPACT ITEM 1 -->
-                <label class="flex flex-row items-center gap-2.5 dark:text-white light:text-black text-xs md:text-sm">
-                  <input type="checkbox" class="peer hidden" />
-                  <div
-                    class="h-5 w-5 flex items-center justify-center rounded-md border border-[#a2a1a833]
-                          light:bg-[#e8e8e8] dark:bg-[#212121]
-                          peer-checked:bg-[#7152f3] transition"
-                  >
-                    <Icon icon="ci:check-big" class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100" />
-                  </div>
-                  Improved platform performance and UI consistency.
-                </label>
-
-                <!-- IMPACT ITEM 2 -->
-                <label class="flex flex-row items-center gap-2.5 dark:text-white light:text-black text-xs md:text-sm">
-                  <input type="checkbox" class="peer hidden" />
-                  <div
-                    class="h-5 w-5 flex items-center justify-center rounded-md border border-[#a2a1a833]
-                          light:bg-[#e8e8e8] dark:bg-[#212121]
-                          peer-checked:bg-[#7152f3] transition"
-                  >
-                    <Icon icon="ci:check-big" class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100" />
-                  </div>
-                  Reduced development time with modular, reusable components.
-                </label>
-
-                <!-- IMPACT ITEM 3 -->
-                <label class="flex flex-row items-center gap-2.5 dark:text-white light:text-black text-xs md:text-sm">
-                  <input type="checkbox" class="peer hidden" />
-                  <div
-                    class="h-5 w-5 flex items-center justify-center rounded-md border border-[#a2a1a833]
-                          light:bg-[#e8e8e8] dark:bg-[#212121]
-                          peer-checked:bg-[#7152f3] transition"
-                  >
-                    <Icon icon="ci:check-big" class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100" />
-                  </div>
-                  Maintained consistent UI across desktop, mobile web, and H5 apps.
-                </label>
-
-              </div>
-
-              <span class="block mt-6 text-sm opacity-70">
-                Tech: Vue 3, Tailwind, API Integration, H5 apps
-              </span>
-            </div>
-
-
           </div>
-
-          <div class="w-screen flex-shrink-0 flex flex-col items-center bg-transparent ">
-            <!-- FULL WIDTH IMAGE CENTERED -->
-            <div class="w-full flex items-center justify-center">
-              <img
-                src="/img/veda33.png"
-                alt="Project Image"
-                class="w-full max-w-[800px] object-contain mx-auto rounded-lg"
-              />
-            </div>
-
-            <!-- TEXT BELOW -->
-            <div class="mt-3 max-w-3xl mx-auto">
-              <h1 class="text-2xl font-bold">Project: E-Commerce Marketplace Platform</h1>
-
-              <!-- WHAT YOU DID -->
-              <div class="mt-2 space-y-1 text-left mx-auto">
-
-                <!-- ITEM 1 -->
-                <label class="flex flex-row items-center gap-2.5 dark:text-white light:text-black text-xs md:text-sm">
-                  <input type="checkbox" class="peer hidden" />
-                  <div
-                    class="h-5 w-5 flex items-center justify-center rounded-md border border-[#a2a1a833]
-                          light:bg-[#e8e8e8] dark:bg-[#212121]
-                          peer-checked:bg-[#7152f3] transition"
-                  >
-                    <Icon icon="ci:check-big" class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100" />
-                  </div>
-                  Built and improved reusable frontend components for Web and H5 apps.
-                </label>
-
-                <!-- ITEM 2 -->
-                <label class="flex flex-row items-center gap-2.5 dark:text-white light:text-black text-xs md:text-sm">
-                  <input type="checkbox" class="peer hidden" />
-                  <div
-                    class="h-5 w-5 flex items-center justify-center rounded-md border border-[#a2a1a833]
-                          light:bg-[#e8e8e8] dark:bg-[#212121]
-                          peer-checked:bg-[#7152f3] transition"
-                  >
-                    <Icon icon="ci:check-big" class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100" />
-                  </div>
-                  Implemented UI/UX enhancements to increase user engagement.
-                </label>
-
-                <!-- ITEM 3 -->
-                <label class="flex flex-row items-center gap-2.5 dark:text-white light:text-black text-xs md:text-sm">
-                  <input type="checkbox" class="peer hidden" />
-                  <div
-                    class="h-5 w-5 flex items-center justify-center rounded-md border border-[#a2a1a833]
-                          light:bg-[#e8e8e8] dark:bg-[#212121]
-                          peer-checked:bg-[#7152f3] transition"
-                  >
-                    <Icon icon="ci:check-big" class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100" />
-                  </div>
-                  Integrated APIs for seamless communication between frontend and backend.
-                </label>
-
-                <!-- ITEM 4 -->
-                <label class="flex flex-row items-center gap-2.5 dark:text-white light:text-black text-xs md:text-sm">
-                  <input type="checkbox" class="peer hidden" />
-                  <div
-                    class="h-5 w-5 flex items-center justify-center rounded-md border border-[#a2a1a833]
-                          light:bg-[#e8e8e8] dark:bg-[#212121]
-                          peer-checked:bg-[#7152f3] transition"
-                  >
-                    <Icon icon="ci:check-big" class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100" />
-                  </div>
-                  Ensured scalable and maintainable code using software engineering best practices.
-                </label>
-
-              </div>
-
-              <!-- IMPACT -->
-              <h3 class="mt-6 font-semibold text-xl">Impact</h3>
-
-              <div class="mt-3 space-y-1 text-left mx-auto">
-
-                <!-- IMPACT ITEM 1 -->
-                <label class="flex flex-row items-center gap-2.5 dark:text-white light:text-black text-xs md:text-sm">
-                  <input type="checkbox" class="peer hidden" />
-                  <div
-                    class="h-5 w-5 flex items-center justify-center rounded-md border border-[#a2a1a833]
-                          light:bg-[#e8e8e8] dark:bg-[#212121]
-                          peer-checked:bg-[#7152f3] transition"
-                  >
-                    <Icon icon="ci:check-big" class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100" />
-                  </div>
-                  Improved platform performance and UI consistency.
-                </label>
-
-                <!-- IMPACT ITEM 2 -->
-                <label class="flex flex-row items-center gap-2.5 dark:text-white light:text-black text-xs md:text-sm">
-                  <input type="checkbox" class="peer hidden" />
-                  <div
-                    class="h-5 w-5 flex items-center justify-center rounded-md border border-[#a2a1a833]
-                          light:bg-[#e8e8e8] dark:bg-[#212121]
-                          peer-checked:bg-[#7152f3] transition"
-                  >
-                    <Icon icon="ci:check-big" class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100" />
-                  </div>
-                  Reduced development time with modular, reusable components.
-                </label>
-
-                <!-- IMPACT ITEM 3 -->
-                <label class="flex flex-row items-center gap-2.5 dark:text-white light:text-black text-xs md:text-sm">
-                  <input type="checkbox" class="peer hidden" />
-                  <div
-                    class="h-5 w-5 flex items-center justify-center rounded-md border border-[#a2a1a833]
-                          light:bg-[#e8e8e8] dark:bg-[#212121]
-                          peer-checked:bg-[#7152f3] transition"
-                  >
-                    <Icon icon="ci:check-big" class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100" />
-                  </div>
-                  Maintained consistent UI across desktop, mobile web, and H5 apps.
-                </label>
-
-              </div>
-
-              <span class="block mt-6 text-sm opacity-70">
-                Tech: Vue 3, Tailwind, API Integration, H5 apps
-              </span>
-            </div>
-
-
-          </div>
-
-          <div class="w-screen flex-shrink-0 flex flex-col items-center bg-transparent ">
-            <!-- FULL WIDTH IMAGE CENTERED -->
-            <div class="w-full flex items-center justify-center">
-              <img
-                src="/img/dreamplay1.png"
-                alt="Project Image"
-                class="w-full max-w-[800px] object-contain mx-auto rounded-lg"
-              />
-            </div>
-
-            <!-- TEXT BELOW -->
-            <div class="mt-3 max-w-3xl mx-auto">
-              <h1 class="text-2xl font-bold">Project: E-Commerce Marketplace Platform</h1>
-
-              <!-- WHAT YOU DID -->
-              <div class="mt-2 space-y-1 text-left mx-auto">
-
-                <!-- ITEM 1 -->
-                <label class="flex flex-row items-center gap-2.5 dark:text-white light:text-black text-xs md:text-sm">
-                  <input type="checkbox" class="peer hidden" />
-                  <div
-                    class="h-5 w-5 flex items-center justify-center rounded-md border border-[#a2a1a833]
-                          light:bg-[#e8e8e8] dark:bg-[#212121]
-                          peer-checked:bg-[#7152f3] transition"
-                  >
-                    <Icon icon="ci:check-big" class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100" />
-                  </div>
-                  Built and improved reusable frontend components for Web and H5 apps.
-                </label>
-
-                <!-- ITEM 2 -->
-                <label class="flex flex-row items-center gap-2.5 dark:text-white light:text-black text-xs md:text-sm">
-                  <input type="checkbox" class="peer hidden" />
-                  <div
-                    class="h-5 w-5 flex items-center justify-center rounded-md border border-[#a2a1a833]
-                          light:bg-[#e8e8e8] dark:bg-[#212121]
-                          peer-checked:bg-[#7152f3] transition"
-                  >
-                    <Icon icon="ci:check-big" class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100" />
-                  </div>
-                  Implemented UI/UX enhancements to increase user engagement.
-                </label>
-
-                <!-- ITEM 3 -->
-                <label class="flex flex-row items-center gap-2.5 dark:text-white light:text-black text-xs md:text-sm">
-                  <input type="checkbox" class="peer hidden" />
-                  <div
-                    class="h-5 w-5 flex items-center justify-center rounded-md border border-[#a2a1a833]
-                          light:bg-[#e8e8e8] dark:bg-[#212121]
-                          peer-checked:bg-[#7152f3] transition"
-                  >
-                    <Icon icon="ci:check-big" class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100" />
-                  </div>
-                  Integrated APIs for seamless communication between frontend and backend.
-                </label>
-
-                <!-- ITEM 4 -->
-                <label class="flex flex-row items-center gap-2.5 dark:text-white light:text-black text-xs md:text-sm">
-                  <input type="checkbox" class="peer hidden" />
-                  <div
-                    class="h-5 w-5 flex items-center justify-center rounded-md border border-[#a2a1a833]
-                          light:bg-[#e8e8e8] dark:bg-[#212121]
-                          peer-checked:bg-[#7152f3] transition"
-                  >
-                    <Icon icon="ci:check-big" class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100" />
-                  </div>
-                  Ensured scalable and maintainable code using software engineering best practices.
-                </label>
-
-              </div>
-
-              <!-- IMPACT -->
-              <h3 class="mt-6 font-semibold text-xl">Impact</h3>
-
-              <div class="mt-3 space-y-1 text-left mx-auto">
-
-                <!-- IMPACT ITEM 1 -->
-                <label class="flex flex-row items-center gap-2.5 dark:text-white light:text-black text-xs md:text-sm">
-                  <input type="checkbox" class="peer hidden" />
-                  <div
-                    class="h-5 w-5 flex items-center justify-center rounded-md border border-[#a2a1a833]
-                          light:bg-[#e8e8e8] dark:bg-[#212121]
-                          peer-checked:bg-[#7152f3] transition"
-                  >
-                    <Icon icon="ci:check-big" class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100" />
-                  </div>
-                  Improved platform performance and UI consistency.
-                </label>
-
-                <!-- IMPACT ITEM 2 -->
-                <label class="flex flex-row items-center gap-2.5 dark:text-white light:text-black text-xs md:text-sm">
-                  <input type="checkbox" class="peer hidden" />
-                  <div
-                    class="h-5 w-5 flex items-center justify-center rounded-md border border-[#a2a1a833]
-                          light:bg-[#e8e8e8] dark:bg-[#212121]
-                          peer-checked:bg-[#7152f3] transition"
-                  >
-                    <Icon icon="ci:check-big" class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100" />
-                  </div>
-                  Reduced development time with modular, reusable components.
-                </label>
-
-                <!-- IMPACT ITEM 3 -->
-                <label class="flex flex-row items-center gap-2.5 dark:text-white light:text-black text-xs md:text-sm">
-                  <input type="checkbox" class="peer hidden" />
-                  <div
-                    class="h-5 w-5 flex items-center justify-center rounded-md border border-[#a2a1a833]
-                          light:bg-[#e8e8e8] dark:bg-[#212121]
-                          peer-checked:bg-[#7152f3] transition"
-                  >
-                    <Icon icon="ci:check-big" class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100" />
-                  </div>
-                  Maintained consistent UI across desktop, mobile web, and H5 apps.
-                </label>
-
-              </div>
-
-              <span class="block mt-6 text-sm opacity-70">
-                Tech: Vue 3, Tailwind, API Integration, H5 apps
-              </span>
-            </div>
-
-
-          </div>
-
-          <div class="w-screen flex-shrink-0 flex flex-col items-center bg-transparent ">
-            <!-- FULL WIDTH IMAGE CENTERED -->
-            <div class="w-full flex items-center justify-center">
-              <img
-                src="/img/bibvip.png"
-                alt="Project Image"
-                class="w-full max-w-[800px] object-contain mx-auto rounded-lg"
-              />
-            </div>
-
-            <!-- TEXT BELOW -->
-            <div class="mt-3 max-w-3xl mx-auto">
-              <h1 class="text-2xl font-bold">Project: E-Commerce Marketplace Platform</h1>
-
-              <!-- WHAT YOU DID -->
-              <div class="mt-2 space-y-1 text-left mx-auto">
-
-                <!-- ITEM 1 -->
-                <label class="flex flex-row items-center gap-2.5 dark:text-white light:text-black text-xs md:text-sm">
-                  <input type="checkbox" class="peer hidden" />
-                  <div
-                    class="h-5 w-5 flex items-center justify-center rounded-md border border-[#a2a1a833]
-                          light:bg-[#e8e8e8] dark:bg-[#212121]
-                          peer-checked:bg-[#7152f3] transition"
-                  >
-                    <Icon icon="ci:check-big" class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100" />
-                  </div>
-                  Built and improved reusable frontend components for Web and H5 apps.
-                </label>
-
-                <!-- ITEM 2 -->
-                <label class="flex flex-row items-center gap-2.5 dark:text-white light:text-black text-xs md:text-sm">
-                  <input type="checkbox" class="peer hidden" />
-                  <div
-                    class="h-5 w-5 flex items-center justify-center rounded-md border border-[#a2a1a833]
-                          light:bg-[#e8e8e8] dark:bg-[#212121]
-                          peer-checked:bg-[#7152f3] transition"
-                  >
-                    <Icon icon="ci:check-big" class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100" />
-                  </div>
-                  Implemented UI/UX enhancements to increase user engagement.
-                </label>
-
-                <!-- ITEM 3 -->
-                <label class="flex flex-row items-center gap-2.5 dark:text-white light:text-black text-xs md:text-sm">
-                  <input type="checkbox" class="peer hidden" />
-                  <div
-                    class="h-5 w-5 flex items-center justify-center rounded-md border border-[#a2a1a833]
-                          light:bg-[#e8e8e8] dark:bg-[#212121]
-                          peer-checked:bg-[#7152f3] transition"
-                  >
-                    <Icon icon="ci:check-big" class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100" />
-                  </div>
-                  Integrated APIs for seamless communication between frontend and backend.
-                </label>
-
-                <!-- ITEM 4 -->
-                <label class="flex flex-row items-center gap-2.5 dark:text-white light:text-black text-xs md:text-sm">
-                  <input type="checkbox" class="peer hidden" />
-                  <div
-                    class="h-5 w-5 flex items-center justify-center rounded-md border border-[#a2a1a833]
-                          light:bg-[#e8e8e8] dark:bg-[#212121]
-                          peer-checked:bg-[#7152f3] transition"
-                  >
-                    <Icon icon="ci:check-big" class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100" />
-                  </div>
-                  Ensured scalable and maintainable code using software engineering best practices.
-                </label>
-
-              </div>
-
-              <!-- IMPACT -->
-              <h3 class="mt-6 font-semibold text-xl">Impact</h3>
-
-              <div class="mt-3 space-y-1 text-left mx-auto">
-
-                <!-- IMPACT ITEM 1 -->
-                <label class="flex flex-row items-center gap-2.5 dark:text-white light:text-black text-xs md:text-sm">
-                  <input type="checkbox" class="peer hidden" />
-                  <div
-                    class="h-5 w-5 flex items-center justify-center rounded-md border border-[#a2a1a833]
-                          light:bg-[#e8e8e8] dark:bg-[#212121]
-                          peer-checked:bg-[#7152f3] transition"
-                  >
-                    <Icon icon="ci:check-big" class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100" />
-                  </div>
-                  Improved platform performance and UI consistency.
-                </label>
-
-                <!-- IMPACT ITEM 2 -->
-                <label class="flex flex-row items-center gap-2.5 dark:text-white light:text-black text-xs md:text-sm">
-                  <input type="checkbox" class="peer hidden" />
-                  <div
-                    class="h-5 w-5 flex items-center justify-center rounded-md border border-[#a2a1a833]
-                          light:bg-[#e8e8e8] dark:bg-[#212121]
-                          peer-checked:bg-[#7152f3] transition"
-                  >
-                    <Icon icon="ci:check-big" class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100" />
-                  </div>
-                  Reduced development time with modular, reusable components.
-                </label>
-
-                <!-- IMPACT ITEM 3 -->
-                <label class="flex flex-row items-center gap-2.5 dark:text-white light:text-black text-xs md:text-sm">
-                  <input type="checkbox" class="peer hidden" />
-                  <div
-                    class="h-5 w-5 flex items-center justify-center rounded-md border border-[#a2a1a833]
-                          light:bg-[#e8e8e8] dark:bg-[#212121]
-                          peer-checked:bg-[#7152f3] transition"
-                  >
-                    <Icon icon="ci:check-big" class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100" />
-                  </div>
-                  Maintained consistent UI across desktop, mobile web, and H5 apps.
-                </label>
-
-              </div>
-
-              <span class="block mt-6 text-sm opacity-70">
-                Tech: Vue 3, Tailwind, API Integration, H5 apps
-              </span>
-            </div>
-
-
-          </div>
-
-          <div class="w-screen flex-shrink-0 flex flex-col items-center bg-transparent ">
-            <!-- FULL WIDTH IMAGE CENTERED -->
-            <div class="w-full flex items-center justify-center">
-              <img
-                src="/img/leads.png"
-                alt="Project Image"
-                class="w-full max-w-[800px] object-contain mx-auto rounded-lg"
-              />
-            </div>
-
-            <!-- TEXT BELOW -->
-            <div class="mt-3 max-w-3xl mx-auto">
-              <h1 class="text-2xl font-bold">Project: E-Commerce Marketplace Platform</h1>
-
-              <!-- WHAT YOU DID -->
-              <div class="mt-2 space-y-1 text-left mx-auto">
-
-                <!-- ITEM 1 -->
-                <label class="flex flex-row items-center gap-2.5 dark:text-white light:text-black text-xs md:text-sm">
-                  <input type="checkbox" class="peer hidden" />
-                  <div
-                    class="h-5 w-5 flex items-center justify-center rounded-md border border-[#a2a1a833]
-                          light:bg-[#e8e8e8] dark:bg-[#212121]
-                          peer-checked:bg-[#7152f3] transition"
-                  >
-                    <Icon icon="ci:check-big" class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100" />
-                  </div>
-                  Built and improved reusable frontend components for Web and H5 apps.
-                </label>
-
-                <!-- ITEM 2 -->
-                <label class="flex flex-row items-center gap-2.5 dark:text-white light:text-black text-xs md:text-sm">
-                  <input type="checkbox" class="peer hidden" />
-                  <div
-                    class="h-5 w-5 flex items-center justify-center rounded-md border border-[#a2a1a833]
-                          light:bg-[#e8e8e8] dark:bg-[#212121]
-                          peer-checked:bg-[#7152f3] transition"
-                  >
-                    <Icon icon="ci:check-big" class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100" />
-                  </div>
-                  Implemented UI/UX enhancements to increase user engagement.
-                </label>
-
-                <!-- ITEM 3 -->
-                <label class="flex flex-row items-center gap-2.5 dark:text-white light:text-black text-xs md:text-sm">
-                  <input type="checkbox" class="peer hidden" />
-                  <div
-                    class="h-5 w-5 flex items-center justify-center rounded-md border border-[#a2a1a833]
-                          light:bg-[#e8e8e8] dark:bg-[#212121]
-                          peer-checked:bg-[#7152f3] transition"
-                  >
-                    <Icon icon="ci:check-big" class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100" />
-                  </div>
-                  Integrated APIs for seamless communication between frontend and backend.
-                </label>
-
-                <!-- ITEM 4 -->
-                <label class="flex flex-row items-center gap-2.5 dark:text-white light:text-black text-xs md:text-sm">
-                  <input type="checkbox" class="peer hidden" />
-                  <div
-                    class="h-5 w-5 flex items-center justify-center rounded-md border border-[#a2a1a833]
-                          light:bg-[#e8e8e8] dark:bg-[#212121]
-                          peer-checked:bg-[#7152f3] transition"
-                  >
-                    <Icon icon="ci:check-big" class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100" />
-                  </div>
-                  Ensured scalable and maintainable code using software engineering best practices.
-                </label>
-
-              </div>
-
-              <!-- IMPACT -->
-              <h3 class="mt-6 font-semibold text-xl">Impact</h3>
-
-              <div class="mt-3 space-y-1 text-left mx-auto">
-
-                <!-- IMPACT ITEM 1 -->
-                <label class="flex flex-row items-center gap-2.5 dark:text-white light:text-black text-xs md:text-sm">
-                  <input type="checkbox" class="peer hidden" />
-                  <div
-                    class="h-5 w-5 flex items-center justify-center rounded-md border border-[#a2a1a833]
-                          light:bg-[#e8e8e8] dark:bg-[#212121]
-                          peer-checked:bg-[#7152f3] transition"
-                  >
-                    <Icon icon="ci:check-big" class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100" />
-                  </div>
-                  Improved platform performance and UI consistency.
-                </label>
-
-                <!-- IMPACT ITEM 2 -->
-                <label class="flex flex-row items-center gap-2.5 dark:text-white light:text-black text-xs md:text-sm">
-                  <input type="checkbox" class="peer hidden" />
-                  <div
-                    class="h-5 w-5 flex items-center justify-center rounded-md border border-[#a2a1a833]
-                          light:bg-[#e8e8e8] dark:bg-[#212121]
-                          peer-checked:bg-[#7152f3] transition"
-                  >
-                    <Icon icon="ci:check-big" class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100" />
-                  </div>
-                  Reduced development time with modular, reusable components.
-                </label>
-
-                <!-- IMPACT ITEM 3 -->
-                <label class="flex flex-row items-center gap-2.5 dark:text-white light:text-black text-xs md:text-sm">
-                  <input type="checkbox" class="peer hidden" />
-                  <div
-                    class="h-5 w-5 flex items-center justify-center rounded-md border border-[#a2a1a833]
-                          light:bg-[#e8e8e8] dark:bg-[#212121]
-                          peer-checked:bg-[#7152f3] transition"
-                  >
-                    <Icon icon="ci:check-big" class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100" />
-                  </div>
-                  Maintained consistent UI across desktop, mobile web, and H5 apps.
-                </label>
-
-              </div>
-
-              <span class="block mt-6 text-sm opacity-70">
-                Tech: Vue 3, Tailwind, API Integration, H5 apps
-              </span>
-            </div>
-
-
-          </div>
-
+        <div class="w-full max-w-[350px] md:max-w-[720px] flex flex-col items-center mt-4 relative z-10">
+          <h3 class="split text-2xl text-center font-bold">{{ data.title }}</h3>
+          <p class="w-full  mx-auto">{{ data.short_desc }}</p>
+
+        </div>
+        <div class="w-full max-w-[350px] md:max-w-[700px] flex flex-wrap gap-2 mt-2">
+          <span
+            v-for="(stack, ind) in data.tech"
+            :key="ind"
+            class="inline-flex items-center justify-center rounded-full px-2.5 py-0.5 gap-1
+                  border text-sm whitespace-nowrap
+                  border-purple-500
+                  text-purple-700 bg-purple-50
+                  dark:border-purple-300 dark:text-purple-300 dark:bg-purple-900/40"
+          >
+            {{ stack }}
+          </span>
+        </div>
 
 
         </div>
+      </div>
+
       </section>
+
+
+      <!-- FULLSCREEN IMAGE VIEWER -->
+<div
+  v-if="fullscreenImg"
+  id="fullscreen-viewer"
+  class="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-[9999]"
+  @click="closeFullscreen"
+>
+  <img
+    id="fullscreen-img"
+    :src="fullscreenImg"
+    class="max-w-[92vw] max-h-[92vh] rounded-lg shadow-2xl select-none"
+  />
+</div>
 
 
 
@@ -1275,7 +761,7 @@ onUnmounted(() => {
     <section
       id="contact-section"
       class="min-h-[100vh] flex flex-col items-center justify-center bg-green-600 text-black relative p-5 overflow-hidden"
-      style="background: linear-gradient(114.41deg, #0ae448 20.74%, #abff84 65.5%);"
+      style="background: linear-gradient(114.41deg, #0ae448 20.74%, #abff84 65.5%), url('https://assets.codepen.io/16327/noise-e82662fe.png'); background-blend-mode: color-dodge;"
     >
       <h2 class="split font-bold text-6xl md:text-7xl text-center">Get in Touch</h2>
       <p class="text-center max-w-xl">
